@@ -1,0 +1,329 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated student or teacher profile and academic metadata.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "enum": ["student", "teacher"]
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"]
+        },
+        "board": {
+          "type": "string",
+          "enum": ["CBSE"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "name", "email", "role", "grade", "board", "createdAt", "updatedAt"]
+    },
+    "AccessibilityPreferences": {
+      "title": "AccessibilityPreferences",
+      "description": "User accessibility, dyslexia, typography, caption, and theme configuration.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "dyslexiaMode": { "type": "boolean" },
+        "focusMode": { "type": "boolean" },
+        "readingRuler": { "type": "boolean" },
+        "textToSpeech": { "type": "boolean" },
+        "highContrast": { "type": "boolean" },
+        "screenReader": { "type": "boolean" },
+        "biggerText": { "type": "boolean" },
+        "smallText": { "type": "boolean" },
+        "lineHeightEnabled": { "type": "boolean" },
+        "highlightLinks": { "type": "boolean" },
+        "textSpacingEnabled": { "type": "boolean" },
+        "hideImages": { "type": "boolean" },
+        "customCursor": { "type": "boolean" },
+        "darkMode": { "type": "boolean" },
+        "invertColors": { "type": "boolean" },
+        "fontFamily": {
+          "type": "string",
+          "enum": ["atkinson", "arial", "jakarta"]
+        },
+        "fontSizePercent": { "type": "number" },
+        "lineSpacing": { "type": "number" },
+        "letterSpacing": { "type": "number" },
+        "wordSpacing": { "type": "number" },
+        "paragraphSpacing": { "type": "number" },
+        "contentWidth": {
+          "type": "string",
+          "enum": ["narrow", "standard", "wide"]
+        },
+        "backgroundTheme": {
+          "type": "string",
+          "enum": ["cream", "yellow", "peach", "green", "blue", "white"]
+        },
+        "ttsRate": { "type": "number" },
+        "captionsEnabled": { "type": "boolean" },
+        "captionSize": {
+          "type": "string",
+          "enum": ["sm", "md", "lg"]
+        },
+        "captionBackground": {
+          "type": "string",
+          "enum": ["dark", "cream", "high-contrast"]
+        },
+        "islPanelDefaultVisible": { "type": "boolean" },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "dyslexiaMode",
+        "focusMode",
+        "readingRuler",
+        "textToSpeech",
+        "highContrast",
+        "screenReader",
+        "biggerText",
+        "smallText",
+        "lineHeightEnabled",
+        "highlightLinks",
+        "textSpacingEnabled",
+        "hideImages",
+        "customCursor",
+        "darkMode",
+        "invertColors",
+        "fontFamily",
+        "fontSizePercent",
+        "lineSpacing",
+        "letterSpacing",
+        "wordSpacing",
+        "paragraphSpacing",
+        "contentWidth",
+        "backgroundTheme",
+        "ttsRate",
+        "captionsEnabled",
+        "captionSize",
+        "captionBackground",
+        "islPanelDefaultVisible",
+        "updatedAt"
+      ]
+    },
+    "SavedNote": {
+      "title": "SavedNote",
+      "description": "Study note saved from My Learning, Video Lessons, or AI Doubt Solver.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "subject": {
+          "type": "string",
+          "enum": ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer"]
+        },
+        "content": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "createdAtLabel": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "uid", "title", "subject", "content", "createdAtLabel", "createdAt"]
+    },
+    "LessonProgress": {
+      "title": "LessonProgress",
+      "description": "Per-lesson completion status for a student.",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "courseId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "subject": {
+          "type": "string",
+          "enum": ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["in-progress", "completed"]
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["lessonId", "uid", "courseId", "subject", "status", "updatedAt"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Completed interactive or AI-generated quiz attempt record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "subject": {
+          "type": "string",
+          "enum": ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer"]
+        },
+        "topic": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "score": { "type": "number" },
+        "total": { "type": "number" },
+        "percent": { "type": "number" },
+        "completedAtLabel": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "uid", "subject", "topic", "score", "total", "percent", "completedAtLabel", "createdAt"]
+    },
+    "DoubtMessage": {
+      "title": "DoubtMessage",
+      "description": "Persisted AI Doubt Solver conversation text turn (image attachments are processed ephemerally in-session and never stored as base64 in Firestore).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 8000 },
+        "mode": { "type": "string", "enum": ["simple", "detailed", "visual"] },
+        "subject": {
+          "type": "string",
+          "enum": ["English", "Mathematics", "Science", "Social Science", "Hindi", "Computer"]
+        },
+        "keyPoints": { "type": "array" },
+        "visualSteps": { "type": "array" },
+        "imagePreview": { "type": "string", "maxLength": 2000, "pattern": "^https://.+" },
+        "saved": { "type": "boolean" },
+        "timestamp": { "type": "string", "maxLength": 60 },
+        "source": { "type": "string", "enum": ["gemini", "offline-guide"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "uid", "role", "content", "timestamp", "createdAt"]
+    },
+    "NotificationState": {
+      "title": "NotificationState",
+      "description": "Per-user read/unread notification state synced across sessions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "read": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "uid", "read", "updatedAt"]
+    },
+    "VideoProgress": {
+      "title": "VideoProgress",
+      "description": "Per-user video playback timestamp and completion state.",
+      "type": "object",
+      "properties": {
+        "videoId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "currentSec": { "type": "number" },
+        "durationSec": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["videoId", "uid", "currentSec", "durationSec", "completed", "updatedAt"]
+    },
+    "ISLEntry": {
+      "title": "ISLEntry",
+      "description": "Authenticated-user Indian Sign Language reference catalog with optional verified external HTTPS video URLs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdByUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "term": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Common vocabulary",
+            "Classroom communication",
+            "Science terminology",
+            "Mathematics terminology",
+            "Educational expressions",
+            "Frequently used phrases"
+          ]
+        },
+        "meaning": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "handshapeGuide": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "usageExample": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "isVerifiedClip": { "type": "boolean" },
+        "verificationLabel": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "customVideoUrl": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^https://.+",
+          "description": "External verified HTTPS video URL for ISL demonstrations."
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "createdByUid",
+        "term",
+        "category",
+        "meaning",
+        "handshapeGuide",
+        "usageExample",
+        "isVerifiedClip",
+        "verificationLabel",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private student or teacher account profile (owner-read/write only)."
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/AccessibilityPreferences" },
+      "description": "User-specific accessibility settings synced across devices."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/SavedNote" },
+      "description": "Personal study notes saved by the learner."
+    },
+    "/users/{userId}/lessonProgress/{lessonId}": {
+      "schema": { "$ref": "#/entities/LessonProgress" },
+      "description": "Per-lesson completion tracking for a user."
+    },
+    "/users/{userId}/quizAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Assessment attempt history for a user."
+    },
+    "/users/{userId}/doubtThreads/{messageId}": {
+      "schema": { "$ref": "#/entities/DoubtMessage" },
+      "description": "Saved AI Doubt Solver conversation turns and attachments."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/NotificationState" },
+      "description": "Notification read/unread states persisted per user."
+    },
+    "/users/{userId}/videoProgress/{videoId}": {
+      "schema": { "$ref": "#/entities/VideoProgress" },
+      "description": "Video playback timestamp and completion state per user."
+    },
+    "/islEntries/{entryId}": {
+      "schema": { "$ref": "#/entities/ISLEntry" },
+      "description": "Authenticated-user ISL terminology catalog and verified external HTTPS video references."
+    }
+  }
+}

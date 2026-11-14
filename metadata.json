@@ -1,0 +1,6 @@
+{
+  "name": "IndraSetu AI",
+  "description": "Har ishare se seekhna, har kisi ke liye. An AI-powered inclusive learning platform built for dyslexic, deaf, hard-of-hearing, non-speaking, and visual learners.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

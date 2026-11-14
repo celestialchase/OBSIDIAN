@@ -1,0 +1,442 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Security Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'punsaini88@gmail.com'
+        || exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isTeacher() {
+      return isVerifiedUser()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    function isAuthorizedEducator() {
+      return isAdmin() || isTeacher();
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidSubject(subj) {
+      return subj in ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi', 'Computer'];
+    }
+
+    function isValidGrade(grade) {
+      return grade in ['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'];
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role', 'grade', 'board', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'name', 'email', 'role', 'grade', 'board', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid == userId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.role in ['student', 'teacher']
+        && isValidGrade(data.grade)
+        && data.board == 'CBSE'
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAccessibilityPrefs(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'dyslexiaMode', 'focusMode', 'readingRuler', 'textToSpeech',
+          'highContrast', 'screenReader', 'biggerText', 'smallText', 'lineHeightEnabled',
+          'highlightLinks', 'textSpacingEnabled', 'hideImages', 'customCursor',
+          'darkMode', 'invertColors', 'fontFamily', 'fontSizePercent', 'lineSpacing',
+          'letterSpacing', 'wordSpacing', 'paragraphSpacing', 'contentWidth',
+          'backgroundTheme', 'ttsRate', 'captionsEnabled', 'captionSize',
+          'captionBackground', 'islPanelDefaultVisible', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'dyslexiaMode', 'focusMode', 'readingRuler', 'textToSpeech',
+          'highContrast', 'screenReader', 'biggerText', 'smallText', 'lineHeightEnabled',
+          'highlightLinks', 'textSpacingEnabled', 'hideImages', 'customCursor',
+          'darkMode', 'invertColors', 'fontFamily', 'fontSizePercent', 'lineSpacing',
+          'letterSpacing', 'wordSpacing', 'paragraphSpacing', 'contentWidth',
+          'backgroundTheme', 'ttsRate', 'captionsEnabled', 'captionSize',
+          'captionBackground', 'islPanelDefaultVisible', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == userId
+        && data.dyslexiaMode is bool
+        && data.focusMode is bool
+        && data.readingRuler is bool
+        && data.textToSpeech is bool
+        && data.highContrast is bool
+        && data.screenReader is bool
+        && data.biggerText is bool
+        && data.smallText is bool
+        && data.lineHeightEnabled is bool
+        && data.highlightLinks is bool
+        && data.textSpacingEnabled is bool
+        && data.hideImages is bool
+        && data.customCursor is bool
+        && data.darkMode is bool
+        && data.invertColors is bool
+        && data.fontFamily in ['atkinson', 'arial', 'jakarta']
+        && data.fontSizePercent is number && data.fontSizePercent >= 85 && data.fontSizePercent <= 160
+        && data.lineSpacing is number && data.lineSpacing >= 1.3 && data.lineSpacing <= 2.2
+        && data.letterSpacing is number && data.letterSpacing >= 0 && data.letterSpacing <= 0.14
+        && data.wordSpacing is number && data.wordSpacing >= 0 && data.wordSpacing <= 0.25
+        && data.paragraphSpacing is number && data.paragraphSpacing >= 0.8 && data.paragraphSpacing <= 2.4
+        && data.contentWidth in ['narrow', 'standard', 'wide']
+        && data.backgroundTheme in ['cream', 'yellow', 'peach', 'green', 'blue', 'white']
+        && data.ttsRate is number && data.ttsRate >= 0.7 && data.ttsRate <= 1.5
+        && data.captionsEnabled is bool
+        && data.captionSize in ['sm', 'md', 'lg']
+        && data.captionBackground in ['dark', 'cream', 'high-contrast']
+        && data.islPanelDefaultVisible is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSavedNote(data, userId, noteId) {
+      return data.keys().hasAll(['id', 'uid', 'title', 'subject', 'content', 'createdAtLabel', 'createdAt'])
+        && data.keys().hasOnly(['id', 'uid', 'title', 'subject', 'content', 'createdAtLabel', 'createdAt'])
+        && data.id is string && data.id == noteId
+        && data.uid is string && data.uid == userId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && isValidSubject(data.subject)
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 4000
+        && data.createdAtLabel is string && data.createdAtLabel.size() >= 1 && data.createdAtLabel.size() <= 60
+        && data.createdAt is timestamp;
+    }
+
+    function isValidLessonProgress(data, userId, lessonId) {
+      return data.keys().hasAll(['lessonId', 'uid', 'courseId', 'subject', 'status', 'updatedAt'])
+        && data.keys().hasOnly(['lessonId', 'uid', 'courseId', 'subject', 'status', 'updatedAt'])
+        && data.lessonId is string && data.lessonId == lessonId
+        && data.uid is string && data.uid == userId
+        && isValidId(data.courseId)
+        && isValidSubject(data.subject)
+        && data.status in ['in-progress', 'completed']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidQuizAttempt(data, userId, attemptId) {
+      return data.keys().hasAll(['id', 'uid', 'subject', 'topic', 'score', 'total', 'percent', 'completedAtLabel', 'createdAt'])
+        && data.keys().hasOnly(['id', 'uid', 'subject', 'topic', 'score', 'total', 'percent', 'completedAtLabel', 'createdAt'])
+        && data.id is string && data.id == attemptId
+        && data.uid is string && data.uid == userId
+        && isValidSubject(data.subject)
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 200
+        && data.score is number && data.score >= 0 && data.score <= 100
+        && data.total is number && data.total >= 1 && data.total <= 100
+        && data.score <= data.total
+        && data.percent is number && data.percent >= 0 && data.percent <= 100
+        && data.completedAtLabel is string && data.completedAtLabel.size() >= 1 && data.completedAtLabel.size() <= 60
+        && data.createdAt is timestamp;
+    }
+
+    function isValidDoubtMessage(data, userId, messageId) {
+      return data.keys().hasAll(['id', 'uid', 'role', 'content', 'timestamp', 'createdAt'])
+        && data.keys().hasOnly([
+          'id', 'uid', 'role', 'content', 'mode', 'subject', 'keyPoints',
+          'visualSteps', 'imagePreview', 'saved', 'timestamp', 'source', 'createdAt'
+        ])
+        && data.id is string && data.id == messageId
+        && data.uid is string && data.uid == userId
+        && data.role in ['user', 'assistant']
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 8000
+        && data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 60
+        && data.createdAt is timestamp
+        && (!('mode' in data) || data.mode in ['simple', 'detailed', 'visual'])
+        && (!('subject' in data) || isValidSubject(data.subject))
+        && (!('keyPoints' in data) || (data.keyPoints is list && data.keyPoints.size() <= 10 && (data.keyPoints.size() == 0 || data.keyPoints[0] is string)))
+        && (!('visualSteps' in data) || (data.visualSteps is list && data.visualSteps.size() <= 10 && (data.visualSteps.size() == 0 || data.visualSteps[0] is string)))
+        && (!('imagePreview' in data) || (data.imagePreview is string && data.imagePreview.size() <= 2000 && data.imagePreview.matches('^https://.+$') && !data.imagePreview.matches('.*\\s.*')))
+        && (!('saved' in data) || data.saved is bool)
+        && (!('source' in data) || data.source in ['gemini', 'offline-guide']);
+    }
+
+    function isValidNotificationState(data, userId, notifId) {
+      return data.keys().hasAll(['id', 'uid', 'read', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'uid', 'read', 'updatedAt'])
+        && data.id is string && data.id == notifId
+        && data.uid is string && data.uid == userId
+        && data.read is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidVideoProgress(data, userId, videoId) {
+      return data.keys().hasAll(['videoId', 'uid', 'currentSec', 'durationSec', 'completed', 'updatedAt'])
+        && data.keys().hasOnly(['videoId', 'uid', 'currentSec', 'durationSec', 'completed', 'updatedAt'])
+        && data.videoId is string && data.videoId == videoId
+        && data.uid is string && data.uid == userId
+        && data.durationSec is number && data.durationSec >= 1 && data.durationSec <= 7200
+        && data.currentSec is number && data.currentSec >= 0 && data.currentSec <= data.durationSec
+        && data.completed is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidISLEntry(data, entryId) {
+      return data.keys().hasAll([
+          'id', 'createdByUid', 'term', 'category', 'meaning',
+          'handshapeGuide', 'usageExample', 'isVerifiedClip', 'verificationLabel', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'createdByUid', 'term', 'category', 'meaning',
+          'handshapeGuide', 'usageExample', 'isVerifiedClip', 'verificationLabel',
+          'customVideoUrl', 'createdAt'
+        ])
+        && data.id is string && data.id == entryId
+        && data.createdByUid is string && data.createdByUid.size() >= 1 && data.createdByUid.size() <= 128
+        && data.term is string && data.term.size() >= 1 && data.term.size() <= 140
+        && data.category in [
+          'Common vocabulary',
+          'Classroom communication',
+          'Science terminology',
+          'Mathematics terminology',
+          'Educational expressions',
+          'Frequently used phrases'
+        ]
+        && data.meaning is string && data.meaning.size() >= 1 && data.meaning.size() <= 1000
+        && data.handshapeGuide is string && data.handshapeGuide.size() >= 1 && data.handshapeGuide.size() <= 1000
+        && data.usageExample is string && data.usageExample.size() >= 1 && data.usageExample.size() <= 500
+        && data.isVerifiedClip is bool
+        && data.verificationLabel is string && data.verificationLabel.size() >= 1 && data.verificationLabel.size() <= 140
+        && (!('customVideoUrl' in data) || (data.customVideoUrl is string && data.customVideoUrl.size() >= 10 && data.customVideoUrl.size() <= 2000 && data.customVideoUrl.matches('^https://.+$') && !data.customVideoUrl.matches('.*\\s.*')))
+        && data.createdAt is timestamp;
+    }
+
+    // 4. Collection & Subcollection Security Rules
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isVerifiedOwner(adminId);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && (incoming().role == 'student' || isAdmin())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'grade', 'role', 'updatedAt']))
+          || (
+            isVerifiedOwner(userId)
+            && incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'grade', 'updatedAt'])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+
+      match /preferences/{prefId} {
+        allow get: if isValidId(userId) && isValidId(prefId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isValidId(userId) && isValidId(prefId)
+          && prefId == 'accessibility'
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidAccessibilityPrefs(incoming(), userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(prefId)
+          && prefId == 'accessibility'
+          && isVerifiedOwner(userId)
+          && isValidAccessibilityPrefs(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time;
+        allow delete: if isValidId(userId) && isValidId(prefId) && (isVerifiedOwner(userId) || isAdmin());
+      }
+
+      match /notes/{noteId} {
+        allow get: if isValidId(userId) && isValidId(noteId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(noteId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidSavedNote(incoming(), userId, noteId)
+          && incoming().createdAt == request.time;
+        allow update: if isValidId(userId) && isValidId(noteId)
+          && isVerifiedOwner(userId)
+          && isValidSavedNote(incoming(), userId, noteId)
+          && incoming().id == existing().id
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content']);
+        allow delete: if isValidId(userId) && isValidId(noteId) && (isVerifiedOwner(userId) || isAdmin());
+      }
+
+      match /lessonProgress/{lessonId} {
+        allow get: if isValidId(userId) && isValidId(lessonId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(lessonId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidLessonProgress(incoming(), userId, lessonId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(lessonId)
+          && isVerifiedOwner(userId)
+          && isValidLessonProgress(incoming(), userId, lessonId)
+          && incoming().lessonId == existing().lessonId
+          && incoming().uid == existing().uid
+          && existing().status != 'completed'
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(lessonId) && isAdmin();
+      }
+
+      match /quizAttempts/{attemptId} {
+        allow get: if isValidId(userId) && isValidId(attemptId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(attemptId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidQuizAttempt(incoming(), userId, attemptId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(attemptId) && isAdmin();
+      }
+
+      match /doubtThreads/{messageId} {
+        allow get: if isValidId(userId) && isValidId(messageId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(messageId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidDoubtMessage(incoming(), userId, messageId)
+          && incoming().createdAt == request.time;
+        allow update: if isValidId(userId) && isValidId(messageId)
+          && isVerifiedOwner(userId)
+          && isValidDoubtMessage(incoming(), userId, messageId)
+          && incoming().id == existing().id
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['saved']);
+        allow delete: if isValidId(userId) && isValidId(messageId) && (isVerifiedOwner(userId) || isAdmin());
+      }
+
+      match /notifications/{notifId} {
+        allow get: if isValidId(userId) && isValidId(notifId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(notifId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidNotificationState(incoming(), userId, notifId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(notifId)
+          && isVerifiedOwner(userId)
+          && isValidNotificationState(incoming(), userId, notifId)
+          && incoming().id == existing().id
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['read', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(notifId) && (isVerifiedOwner(userId) || isAdmin());
+      }
+
+      match /videoProgress/{videoId} {
+        allow get: if isValidId(userId) && isValidId(videoId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(videoId)
+          && isVerifiedOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && isValidVideoProgress(incoming(), userId, videoId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(videoId)
+          && isVerifiedOwner(userId)
+          && isValidVideoProgress(incoming(), userId, videoId)
+          && incoming().videoId == existing().videoId
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['currentSec', 'durationSec', 'completed', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(videoId) && (isVerifiedOwner(userId) || isAdmin());
+      }
+    }
+
+    // Authenticated-user policy for ISL catalog; only teachers/admins can grant verified status
+    match /islEntries/{entryId} {
+      allow get: if isValidId(entryId) && isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isValidId(entryId)
+        && isVerifiedUser()
+        && isValidISLEntry(incoming(), entryId)
+        && incoming().createdByUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && (
+          isAuthorizedEducator()
+          || (
+            incoming().isVerifiedClip == false
+            && incoming().verificationLabel in [
+              'Student Submission (Pending Verification)',
+              'Educator Text & Handshape Reference'
+            ]
+          )
+        );
+      allow update: if isValidId(entryId)
+        && isVerifiedUser()
+        && isValidISLEntry(incoming(), entryId)
+        && incoming().id == existing().id
+        && incoming().createdByUid == existing().createdByUid
+        && incoming().createdAt == existing().createdAt
+        && (
+          (
+            isAuthorizedEducator()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'term', 'category', 'meaning', 'handshapeGuide', 'usageExample',
+              'isVerifiedClip', 'verificationLabel', 'customVideoUrl'
+            ])
+          )
+          || (
+            existing().createdByUid == request.auth.uid
+            && existing().isVerifiedClip == false
+            && incoming().isVerifiedClip == false
+            && incoming().verificationLabel == existing().verificationLabel
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'term', 'category', 'meaning', 'handshapeGuide', 'usageExample',
+              'customVideoUrl'
+            ])
+          )
+        );
+      allow delete: if isValidId(entryId) && (
+        isAuthorizedEducator()
+        || (isVerifiedUser() && existing().createdByUid == request.auth.uid && existing().isVerifiedClip == false)
+      );
+    }
+  }
+}
